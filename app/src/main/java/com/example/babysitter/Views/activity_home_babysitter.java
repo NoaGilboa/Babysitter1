@@ -1,4 +1,4 @@
-package com.example.babysitter;
+package com.example.babysitter.Views;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,11 +10,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.babysitter.Adpters.ParentAdapter;
+import com.example.babysitter.Models.BabysittingEvent;
+import com.example.babysitter.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -26,10 +30,11 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 
+
 public class activity_home_babysitter extends AppCompatActivity {
     private RecyclerView recyclerView;
     private ParentAdapter adapter;
-    private List<Message> messages;
+    private List<BabysittingEvent> messages;
     private FirebaseDatabase database;
 
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,9 +68,9 @@ public class activity_home_babysitter extends AppCompatActivity {
         findViewById(R.id.btnSortByOldetoNewer).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Collections.sort(messages, new Comparator<Message>() {
+                Collections.sort(messages, new Comparator<BabysittingEvent>() {
                     @Override
-                    public int compare(Message m1, Message m2) {
+                    public int compare(BabysittingEvent m1, BabysittingEvent m2) {
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                         try {
                             Date date1 = sdf.parse(m1.getSelectedDate());
@@ -87,9 +92,9 @@ public class activity_home_babysitter extends AppCompatActivity {
         findViewById(R.id.btnSortByNewerToOlder).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Collections.sort(messages, new Comparator<Message>() {
+                Collections.sort(messages, new Comparator<BabysittingEvent>() {
                     @Override
-                    public int compare(Message m1, Message m2) {
+                    public int compare(BabysittingEvent m1, BabysittingEvent m2) {
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                         try {
                             Date date1 = sdf.parse(m1.getSelectedDate());
@@ -110,34 +115,40 @@ public class activity_home_babysitter extends AppCompatActivity {
     }
 
     private void loadMessages() {
-        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        // Note: Adjusted path to match your database structure
-        DatabaseReference messagesRef = database.getReference("Messages").child("babysitterUID: " + currentUserId);
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        if (auth.getCurrentUser() != null) {
+            String currentUserId = auth.getCurrentUser().getUid();
+            DatabaseReference messagesRef = database.getReference("Messages");
 
-        messagesRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                messages.clear();
-                for (DataSnapshot parentSnapshot : dataSnapshot.getChildren()) {
-                    // Iterate through each parent UID under the babysitter
-                    for (DataSnapshot messageSnapshot : parentSnapshot.getChildren()) {
-                        // Now, we are iterating through each message under each parent UID
-                        Message message = messageSnapshot.getValue(Message.class);
+            // Create a query to fetch messages where the babysitterUid equals the current user's UID
+            Query query = messagesRef.orderByChild("babysitterUid").equalTo(currentUserId);
+
+            query.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    messages.clear(); // Clear the existing list to avoid duplicates
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        BabysittingEvent message = snapshot.getValue(BabysittingEvent.class);
                         if (message != null) {
                             messages.add(message);
-                            Log.d("loadMessages", "Message added pid: " + message.getParentUid());
+                            Log.d("loadMessages", "Loaded message for babysitter UID: " + currentUserId + ", Message: " + message.getMessageText());
                         }
                     }
+                    adapter.notifyDataSetChanged(); // Notify the adapter to refresh the list
                 }
-                adapter.notifyDataSetChanged();
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("loadMessages", "Failed to load data", error.toException());
-            }
-        });
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.e("loadMessages", "Failed to load messages for babysitter: " + currentUserId, databaseError.toException());
+                }
+            });
+
+        } else {
+            Log.e("loadMessages", "No user logged in");
+        }
     }
+
 
 
 }

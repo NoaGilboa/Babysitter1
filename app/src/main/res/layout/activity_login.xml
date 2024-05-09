@@ -6,7 +6,7 @@
     android:background="@drawable/ic_launcher_background"
     android:gravity="center"
     android:orientation="vertical"
-    tools:context=".activity_login">
+    tools:context=".Views.activity_login">
 
     <LinearLayout
         android:layout_width="match_parent"

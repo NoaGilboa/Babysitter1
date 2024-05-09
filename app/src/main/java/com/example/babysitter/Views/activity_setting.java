@@ -1,4 +1,4 @@
-package com.example.babysitter;
+package com.example.babysitter.Views;
 
 import android.content.Intent;
 import android.location.Address;
@@ -13,8 +13,10 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.babysitter.Users.Babysitter;
-import com.example.babysitter.Users.Parent;
+import com.example.babysitter.GPSTracker;
+import com.example.babysitter.Models.Babysitter;
+import com.example.babysitter.Models.Parent;
+import com.example.babysitter.R;
 import com.example.babysitter.databinding.ActivitySettingsBinding;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;

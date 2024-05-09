@@ -1,4 +1,4 @@
-package com.example.babysitter.Users;
+package com.example.babysitter.Models;
 
 public class Babysitter extends User {
     private int age;

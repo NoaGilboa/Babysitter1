@@ -1,10 +1,9 @@
-package com.example.babysitter;
+package com.example.babysitter.Views;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -18,8 +17,10 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.babysitter.Users.Babysitter;
-import com.example.babysitter.Users.Parent;
+import com.example.babysitter.GPSTracker;
+import com.example.babysitter.Models.Babysitter;
+import com.example.babysitter.Models.Parent;
+import com.example.babysitter.R;
 import com.example.babysitter.databinding.ActivityRegisterBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;

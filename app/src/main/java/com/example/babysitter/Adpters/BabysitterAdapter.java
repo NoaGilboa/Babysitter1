@@ -1,4 +1,4 @@
-package com.example.babysitter;
+package com.example.babysitter.Adpters;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
@@ -14,7 +14,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.babysitter.Users.Babysitter;
+import com.example.babysitter.Models.Babysitter;
+import com.example.babysitter.Models.BabysittingEvent;
+import com.example.babysitter.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -22,7 +24,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.Calendar;
 import java.util.List;
 
-class BabysitterAdapter extends RecyclerView.Adapter<BabysitterAdapter.BabysitterViewHolder> {
+public class BabysitterAdapter extends RecyclerView.Adapter<BabysitterAdapter.BabysitterViewHolder> {
     private List<Babysitter> babysitters;
     private Context context;
 
@@ -87,22 +89,19 @@ class BabysitterAdapter extends RecyclerView.Adapter<BabysitterAdapter.Babysitte
                 String babysitterUID = babysitter.getUid();
                 String parentUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-                Message message = new Message(parentUID, messageText, selectedDate);
-                DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference()
-                        .child("Messages").child("babysitterUID: "+ babysitterUID).child("parentUID: "+ parentUID).push();
-
-
-                messagesRef.setValue(message)
+                BabysittingEvent babysittingEvent = new BabysittingEvent(parentUID,babysitterUID, messageText, selectedDate);
+                DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference().child("Messages").push();
+                babysittingEvent.setMessageId(messagesRef.getKey());
+                messagesRef.setValue(babysittingEvent)
                         .addOnSuccessListener(aVoid -> {
                             Toast.makeText(context, "Message sent successfully", Toast.LENGTH_SHORT).show();
                             holder.messageEditText.setVisibility(View.GONE);
                             holder.showDatePickerButton.setVisibility(View.GONE);
-                            holder.tvSelectedDate.setVisibility(View.GONE);
                             holder.btnSendMessage.setVisibility(View.GONE);
+                            holder.tvSelectedDate.setVisibility(View.GONE);
                             holder.tvSelectedDate.setText("Message sent successfully");
-                            holder.tvSelectedDate.setTypeface(null, Typeface.BOLD);                            holder.tvSelectedDate.setVisibility(View.VISIBLE);
-
-
+                            holder.tvSelectedDate.setTypeface(null, Typeface.BOLD);
+                            holder.tvSelectedDate.setVisibility(View.VISIBLE);
                         })
                         .addOnFailureListener(e -> Toast.makeText(context, "Failed to send message", Toast.LENGTH_SHORT).show());
             });

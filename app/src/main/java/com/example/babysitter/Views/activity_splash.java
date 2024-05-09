@@ -1,4 +1,4 @@
-package com.example.babysitter;
+package com.example.babysitter.Views;
 
 import android.animation.Animator;
 import android.content.Intent;
@@ -9,6 +9,8 @@ import android.view.animation.AccelerateInterpolator;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.babysitter.R;
 
 public class activity_splash extends AppCompatActivity {
 

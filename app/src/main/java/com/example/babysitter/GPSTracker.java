@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
-class GPSTracker extends Service implements LocationListener {
+public class GPSTracker extends Service implements LocationListener {
     private final Context mContext;
 
     // flag for GPS status

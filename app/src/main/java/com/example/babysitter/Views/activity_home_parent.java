@@ -1,4 +1,4 @@
-package com.example.babysitter;
+package com.example.babysitter.Views;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,8 +10,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.babysitter.Users.Babysitter;
-import com.example.babysitter.Users.Parent;
+import com.example.babysitter.Adpters.BabysitterAdapter;
+import com.example.babysitter.Models.Babysitter;
+import com.example.babysitter.Models.Parent;
+import com.example.babysitter.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;

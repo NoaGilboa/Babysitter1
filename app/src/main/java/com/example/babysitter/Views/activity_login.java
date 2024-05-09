@@ -1,4 +1,4 @@
-package com.example.babysitter;
+package com.example.babysitter.Views;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.babysitter.R;
 import com.example.babysitter.databinding.ActivityLoginBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
