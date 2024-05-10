@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,12 +15,8 @@ import com.example.babysitter.Adpters.BabysitterAdapter;
 import com.example.babysitter.Models.Babysitter;
 import com.example.babysitter.Models.Parent;
 import com.example.babysitter.R;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.example.babysitter.Utilities.FirebaseDataManager;
+import com.example.babysitter.Utilities.FirebaseUserManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,33 +27,31 @@ public class activity_home_parent extends AppCompatActivity {
     private RecyclerView recyclerView;
     private BabysitterAdapter adapter;
     private List<Babysitter> babysitters;
-    private FirebaseDatabase database;
-    private FirebaseAuth auth;
+
+    private FirebaseDataManager dataManager;
+    private FirebaseUserManager userManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_parent);
 
+        userManager = new FirebaseUserManager();
+        dataManager = new FirebaseDataManager();
+
         recyclerView = findViewById(R.id.rvBabysitters);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         babysitters = new ArrayList<>();
         adapter = new BabysitterAdapter(babysitters, this);
         recyclerView.setAdapter(adapter);
-        auth = FirebaseAuth.getInstance();
 
-        database = FirebaseDatabase.getInstance();
         loadBabysitters();
 
-        findViewById(R.id.btnLogout).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FirebaseAuth.getInstance().signOut();
-                startActivity(new Intent(activity_home_parent.this, activity_login.class));
-                finish();
-            }
+        findViewById(R.id.btnLogout).setOnClickListener(v -> {
+            userManager.logOutUser();
+            startActivity(new Intent(activity_home_parent.this, activity_login.class));
+            finish();
         });
-
         findViewById(R.id.btnSettings).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -82,71 +77,42 @@ public class activity_home_parent extends AppCompatActivity {
     }
 
     private void sortBabysittersByDistance() {
-        String currentUserId = auth.getCurrentUser().getUid();
-        database.getReference("Users").child("Parent").child(currentUserId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Parent parent = dataSnapshot.getValue(Parent.class);
-                if (parent != null) {
-                    double parentLatitude = parent.getLatitude();
-                    double parentLongitude = parent.getLongitude();
-
-                    Collections.sort(babysitters, new Comparator<Babysitter>() {
-                        @Override
-                        public int compare(Babysitter b1, Babysitter b2) {
-                            double distanceToB1 = calculateDistance(parentLatitude, parentLongitude, b1.getLatitude(), b1.getLongitude());
-                            double distanceToB2 = calculateDistance(parentLatitude, parentLongitude, b2.getLatitude(), b2.getLongitude());
-                            return Double.compare(distanceToB1, distanceToB2);
-                        }
-                    });
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.e("fetchParent", "Failed to read parent", databaseError.toException());
-            }
-        });
-    }
-
-    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-        final int R = 6371; // Radius of the Earth in kilometers
-        try {
-            double latDistance = Math.toRadians(lat2 - lat1);
-            double lonDistance = Math.toRadians(lon2 - lon1);
-            double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                    + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                    * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-            double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            double distance = R * c; // convert to kilometers
-
-            distance = Math.pow(distance, 2);
-            return Math.sqrt(distance);
-        } catch (Exception e) {
-            Log.e("calculateDistance", "Error calculating distance", e);
-            return -1; // Return an invalid distance in case of error
-        }
-    }
-
-
-    private void loadBabysitters() {
-        DatabaseReference babysittersRef = database.getReference("Users").child("Babysitter");
-        babysittersRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                babysitters.clear();
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    Babysitter babysitter = snapshot.getValue(Babysitter.class);
-                    if (babysitter != null) {
-                        babysitter.setUid(snapshot.getKey());
-                        babysitters.add(babysitter);
+        if (userManager.isUserLoggedIn()) {
+            String currentUserId = userManager.getCurrentUserId();
+            dataManager.sortBabysittersByDistance(currentUserId, new ArrayList<>(babysitters), new FirebaseDataManager.OnBabysittersSortedListener() {
+                @Override
+                public void onSorted(List<Babysitter> sortedBabysitters) {
+                    if (!sortedBabysitters.isEmpty()) {
+                        babysitters.clear();
+                        babysitters.addAll(sortedBabysitters);
+                        adapter.notifyDataSetChanged();
+                        Toast.makeText(activity_home_parent.this, "Babysitters sorted by distance", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(activity_home_parent.this, "No babysitters available or error in sorting", Toast.LENGTH_SHORT).show();
                     }
                 }
+
+                @Override
+                public void onFailure(Exception exception) {
+                    Toast.makeText(activity_home_parent.this, "Error sorting babysitters: " + exception.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void loadBabysitters() {
+        dataManager.loadAllBabysitters(new FirebaseDataManager.OnBabysittersLoadedListener() {
+            @Override
+            public void onBabysittersLoaded(List<Babysitter> loadedBabysitters) {
+                babysitters.clear();
+                babysitters.addAll(loadedBabysitters);
                 adapter.notifyDataSetChanged();
             }
 
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("loadBabysitters", "Failed to load data", error.toException());
+            @Override
+            public void onFailure(Exception exception) {
+                Toast.makeText(activity_home_parent.this, "Failed to load babysitters: " + exception.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

@@ -1,29 +1,69 @@
 package com.example.babysitter.Utilities;
 
-import android.app.ProgressDialog;
-import android.content.Context;
+
+import android.app.Activity;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 
 public class FirebaseUserManager {
-    private Context context;
     private FirebaseAuth mAuth;
 
-    public FirebaseUserManager(Context context) {
-        this.context = context;
-        this.mAuth = FirebaseAuth.getInstance();
+    public FirebaseUserManager() {
+        mAuth = FirebaseAuth.getInstance();
+    }
+    public boolean isUserLoggedIn() {
+        return mAuth.getCurrentUser() != null;
     }
 
-    public void signIn(String email, String password, ProgressDialog progressDialog, boolean isBabysitter, boolean isParent) {
+    public void logOutUser() {
+        mAuth.signOut();
+    }
+    public void createUser(String email, String password, Activity activity, OnUserCreationListener listener) {
+        mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(activity, task -> {
+            if (task.isSuccessful()) {
+                String uid = task.getResult().getUser().getUid();
+                listener.onUserCreated(uid);
+            } else {
+                Toast.makeText(activity, "Registration failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                listener.onFailure(task.getException());
+            }
+        });
+    }
+
+    public void loginUser(String email, String password, Activity activity, OnLoginListener listener) {
         mAuth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> {
-                    progressDialog.dismiss();
+                .addOnCompleteListener(activity, task -> {
                     if (task.isSuccessful()) {
-                        new FirebaseDataManager(context).checkUserRole(mAuth.getCurrentUser().getUid(), isBabysitter, isParent);
+                        String uid = mAuth.getCurrentUser().getUid();
+                        listener.onLoginSuccess(uid);
                     } else {
-                        Toast.makeText(context, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                        listener.onLoginFailure(task.getException());
                     }
                 });
+    }
+
+    public String getCurrentUserId() {
+        if (mAuth.getCurrentUser() != null) {
+            return mAuth.getCurrentUser().getUid();
+        }
+        return null;
+    }
+
+    public interface OnUserDataSavedListener {
+        void onSuccess();
+        void onFailure(Exception exception);
+    }
+
+    public interface OnLoginListener {
+        void onLoginSuccess(String uid);
+
+        void onLoginFailure(Exception e);
+    }
+
+    public interface OnUserCreationListener {
+        void onUserCreated(String uid);
+
+        void onFailure(Exception exception);
     }
 }
