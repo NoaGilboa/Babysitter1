@@ -21,7 +21,6 @@ public class Babysitter extends User {
         this.description = description;
         this.hourlyWage = hourlyWage;
         this.experience=experience;
-        this.userType = "Babysitter";
     }
 
     public int getAge() {

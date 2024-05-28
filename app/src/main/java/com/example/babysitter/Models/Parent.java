@@ -10,7 +10,6 @@ public class Parent extends User {
     public Parent(String uid, String name, String phone, String mail, String address, String password, int numberOfChildren,double latitude,double longitude) {
         super(uid, name, phone, mail, address, password,latitude,longitude);
         this.numberOfChildren = numberOfChildren;
-        this.userType = "Parent";
     }
 
     public int getNumberOfChildren() {

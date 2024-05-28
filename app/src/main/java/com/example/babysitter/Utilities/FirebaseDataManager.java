@@ -81,7 +81,8 @@ public class FirebaseDataManager {
     }
 
 
-    public void saveUserData(Object user, String userType, OnUserDataSavedListener listener) {
+    public void saveUserData(Object user, OnUserDataSavedListener listener) {
+        String userType = user instanceof Babysitter ? "Babysitter" : "Parent";
         String uid = (user instanceof Babysitter) ? ((Babysitter) user).getUid() : ((Parent) user).getUid();
         DatabaseReference userRef = database.getReference().child("Users").child(userType).child(uid);
         userRef.setValue(user).addOnCompleteListener(task -> {

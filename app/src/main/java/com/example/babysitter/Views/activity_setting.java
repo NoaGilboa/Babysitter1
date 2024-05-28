@@ -162,7 +162,7 @@ public class activity_setting extends AppCompatActivity {
                     binding.etDescription.getText().toString(),
                     Double.parseDouble(binding.etHourlyWage.getText().toString()),
                     Double.parseDouble(binding.etExperience.getText().toString()), this.latitude, this.longitude);
-            dataManager.saveUserData(babysitter, "Babysitter", new FirebaseDataManager.OnUserDataSavedListener() {
+            dataManager.saveUserData(babysitter,  new FirebaseDataManager.OnUserDataSavedListener() {
                 @Override
                 public void onSuccess() {
                     Toast.makeText(activity_setting.this, "Babysitter information updated successfully.", Toast.LENGTH_SHORT).show();
@@ -176,7 +176,7 @@ public class activity_setting extends AppCompatActivity {
         } else {
             Parent parent = new Parent(uid, name, phone, email, address, this.password,
                     Integer.parseInt(binding.etNumberOfChildren.getText().toString()), this.latitude, this.longitude);
-            dataManager.saveUserData(parent, "Parent", new FirebaseDataManager.OnUserDataSavedListener() {
+            dataManager.saveUserData(parent,  new FirebaseDataManager.OnUserDataSavedListener() {
                 @Override
                 public void onSuccess() {
                     Toast.makeText(activity_setting.this, "Parent information updated successfully.", Toast.LENGTH_SHORT).show();
