@@ -1,7 +1,11 @@
 package com.example.babysitter.Models;
 
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
+
 public class Babysitter extends User {
-    private int age;
+    private String dateOfBirth;
     private boolean smoke;
     private String maritalStatus;
     private String description;
@@ -13,9 +17,9 @@ public class Babysitter extends User {
     }
 
     public Babysitter(String uid, String name, String phone, String mail, String address, String password,
-                      int age, boolean smoke, String maritalStatus, String description, double hourlyWage, double experience,double latitude,double longitude) {
+                      String  dateOfBirth, boolean smoke, String maritalStatus, String description, double hourlyWage, double experience,double latitude,double longitude) {
         super(uid, name, phone, mail, address, password,latitude,longitude);
-        this.age = age;
+        this.dateOfBirth=dateOfBirth;
         this.smoke = smoke;
         this.maritalStatus = maritalStatus;
         this.description = description;
@@ -24,13 +28,21 @@ public class Babysitter extends User {
     }
 
     public int getAge() {
-        return age;
+        if (dateOfBirth == null) {
+            return 0;
+        }
+        LocalDate dob = LocalDate.parse(dateOfBirth, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        return Period.between(dob, LocalDate.now()).getYears();
+    }
+    public String  getDateOfBirth() {
+        return dateOfBirth;
     }
 
-    public Babysitter setAge(int age) {
-        this.age = age;
+    public Babysitter setDateOfBirth(String dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
         return this;
     }
+
 
     public boolean isSmoke() {
         return smoke;

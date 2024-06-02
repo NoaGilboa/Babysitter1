@@ -1,5 +1,6 @@
 package com.example.babysitter.Views;
 
+import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.location.Address;
@@ -24,15 +25,19 @@ import com.example.babysitter.Utilities.FirebaseDataManager;
 import com.example.babysitter.Utilities.FirebaseUserManager;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
 public class activity_register extends AppCompatActivity {
 
-    private EditText etName, etPhone, etMail, etAddress, etAge, etMaritalStatus, etDescription, etNumberOfChildren, etPassword, etHourlyWage, etExperience;
+    private EditText etName, etPhone, etMail, etAddress,etDateOfBirth, etMaritalStatus, etDescription, etNumberOfChildren, etPassword, etHourlyWage, etExperience;
     private RadioGroup rgUserType, rgSmoke;
     private RadioButton rbBabysitter, rbParent, rbSmokeYes, rbSmokeNo;
-    private TextView alreadyAccount;
+    private TextView alreadyAccount, tvAge;
     private Button btnRegister;
 
     double latitude, longitude;
@@ -62,7 +67,8 @@ public class activity_register extends AppCompatActivity {
         etPhone = findViewById(R.id.etPhone);
         etMail = findViewById(R.id.etMail);
         etAddress = findViewById(R.id.etAddress);
-        etAge = findViewById(R.id.etAge);
+        etDateOfBirth = findViewById(R.id.etDateOfBirth);
+        tvAge = findViewById(R.id.tvAge);
         etMaritalStatus = findViewById(R.id.etMaritalStatus);
         etDescription = findViewById(R.id.etDescription);
         etNumberOfChildren = findViewById(R.id.etNumberOfChildren);
@@ -105,8 +111,25 @@ public class activity_register extends AppCompatActivity {
                 gpsTracker.showSettingsAlert();
             }
         });
+        etDateOfBirth.setOnClickListener(v -> showDatePickerDialog());
     }
+    private void showDatePickerDialog() {
+        final Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
 
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this,
+                (view, selectedYear, selectedMonth, selectedDay) -> {
+                    LocalDate selectedDate = LocalDate.of(selectedYear, selectedMonth + 1, selectedDay);
+                    etDateOfBirth.setText(selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                    tvAge.setText(String.valueOf(calculateAge(selectedDate)));
+                }, year, month, day);
+        datePickerDialog.show();
+    }
+    private int calculateAge(LocalDate dateOfBirth) {
+        return Period.between(dateOfBirth, LocalDate.now()).getYears();
+    }
     public void getAddressFromLocation(EditText etAddress, double latitude, double longitude) {
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         try {
@@ -139,14 +162,16 @@ public class activity_register extends AppCompatActivity {
             public void onUserCreated(String uid) {
                 progressDialog.dismiss();
                 if (rbBabysitter.isChecked()) {
+                    String dateOfBirth = etDateOfBirth.getText().toString().trim();
                     Babysitter babysitter = new Babysitter(uid, name, phone, email, address, password,
-                            Integer.parseInt(etAge.getText().toString().trim()),
+                            dateOfBirth,
                             rgSmoke.getCheckedRadioButtonId() == R.id.rbSmokeYes,
                             etMaritalStatus.getText().toString().trim(),
                             etDescription.getText().toString().trim(),
                             Double.parseDouble(etHourlyWage.getText().toString().trim()),
                             Double.parseDouble(etExperience.getText().toString().trim()),
                             latitude, longitude);
+                    tvAge.setText(babysitter.getAge());
                     dataManager.saveBabysitter(babysitter);
                 } else if (rbParent.isChecked()) {
                     Parent parent = new Parent(uid, name, phone, email, address, password,
@@ -167,7 +192,8 @@ public class activity_register extends AppCompatActivity {
     }
 
     private void showBabysitterFields() {
-        etAge.setVisibility(View.VISIBLE);
+        etDateOfBirth.setVisibility(View.VISIBLE);
+        tvAge.setVisibility(View.VISIBLE);
         smokingLayout.setVisibility(View.VISIBLE);
         etMaritalStatus.setVisibility(View.VISIBLE);
         etDescription.setVisibility(View.VISIBLE);
@@ -178,7 +204,7 @@ public class activity_register extends AppCompatActivity {
     }
 
     private void showParentFields() {
-        etAge.setVisibility(View.GONE);
+        tvAge.setVisibility(View.GONE);
         smokingLayout.setVisibility(View.GONE);
         etMaritalStatus.setVisibility(View.GONE);
         etDescription.setVisibility(View.GONE);

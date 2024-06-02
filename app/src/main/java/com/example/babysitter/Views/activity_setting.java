@@ -1,5 +1,6 @@
 package com.example.babysitter.Views;
 
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
@@ -20,6 +21,10 @@ import com.example.babysitter.Utilities.FirebaseUserManager;
 import com.example.babysitter.databinding.ActivitySettingsBinding;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -32,6 +37,7 @@ public class activity_setting extends AppCompatActivity {
     private double latitude = 0;
     private double longitude = 0;
     private String password;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,12 +60,15 @@ public class activity_setting extends AppCompatActivity {
             } else {
                 gpsTracker.showSettingsAlert();
             }
-        });    }
+        });
+
+        binding.etDateOfBirth.setOnClickListener(v -> showDatePickerDialog());
+    }
 
     private void loadData() {
         if (userManager.isUserLoggedIn()) {
             String uid = userManager.getCurrentUserId();
-            dataManager.loadUserData(uid,  new FirebaseDataManager.OnUserDataLoadedListener() {
+            dataManager.loadUserData(uid, new FirebaseDataManager.OnUserDataLoadedListener() {
                 @Override
                 public void onBabysitterLoaded(Babysitter babysitter) {
                     updateUIWithBabysitter(babysitter);
@@ -81,23 +90,23 @@ public class activity_setting extends AppCompatActivity {
         }
     }
 
-
-
     private void updateUIWithBabysitter(Babysitter babysitter) {
         // Populate the UI with babysitter data
         binding.etName.setText(babysitter.getName());
         binding.etPhone.setText(babysitter.getPhone());
         binding.etMail.setText(babysitter.getMail());
         binding.etAddress.setText(babysitter.getAddress());
-        binding.etAge.setText(String.valueOf(babysitter.getAge()));
+        binding.etDateOfBirth.setText(babysitter.getDateOfBirth());
         binding.etMaritalStatus.setText(babysitter.getMaritalStatus());
         binding.etDescription.setText(babysitter.getDescription());
+        binding.tvAge.setText(String.valueOf(babysitter.getAge()));
         binding.etHourlyWage.setText(String.valueOf(babysitter.getHourlyWage()));
         binding.etExperience.setText(String.valueOf(babysitter.getExperience()));
-        this.password=babysitter.getPassword();
+        this.password = babysitter.getPassword();
 
         // Set the visibility of Babysitter exclusive fields
-        binding.etAge.setVisibility(View.VISIBLE);
+        binding.tvAge.setVisibility(View.VISIBLE);
+        binding.etDateOfBirth.setVisibility(View.VISIBLE);
         binding.rgSmoke.setVisibility(View.VISIBLE);
         binding.etMaritalStatus.setVisibility(View.VISIBLE);
         binding.etDescription.setVisibility(View.VISIBLE);
@@ -115,7 +124,6 @@ public class activity_setting extends AppCompatActivity {
         }
     }
 
-
     private void updateUIWithParent(Parent parent) {
         // Populate the UI with parent data
         binding.etName.setText(parent.getName());
@@ -123,13 +131,14 @@ public class activity_setting extends AppCompatActivity {
         binding.etMail.setText(parent.getMail());
         binding.etAddress.setText(parent.getAddress());
         binding.etNumberOfChildren.setText(String.valueOf(parent.getNumberOfChildren()));
-        this.password=parent.getPassword();
+        this.password = parent.getPassword();
 
         // Set the visibility of Parent exclusive field
         binding.etNumberOfChildren.setVisibility(View.VISIBLE);
 
         // Set the visibility of Babysitter exclusive fields to gone
-        binding.etAge.setVisibility(View.GONE);
+        binding.tvAge.setVisibility(View.GONE);
+        binding.etDateOfBirth.setVisibility(View.GONE);
         binding.rgSmoke.setVisibility(View.GONE);
         binding.etMaritalStatus.setVisibility(View.GONE);
         binding.etDescription.setVisibility(View.GONE);
@@ -154,15 +163,15 @@ public class activity_setting extends AppCompatActivity {
             return;
         }
 
-        if (binding.etAge.getVisibility() == View.VISIBLE) {
+        if (binding.tvAge.getVisibility() == View.VISIBLE) {
             Babysitter babysitter = new Babysitter(uid, name, phone, email, address, this.password,
-                    Integer.parseInt(binding.etAge.getText().toString()),
+                    binding.etDateOfBirth.getText().toString(),
                     binding.rgSmoke.getCheckedRadioButtonId() == R.id.rbSmokeYes,
                     binding.etMaritalStatus.getText().toString(),
                     binding.etDescription.getText().toString(),
                     Double.parseDouble(binding.etHourlyWage.getText().toString()),
                     Double.parseDouble(binding.etExperience.getText().toString()), this.latitude, this.longitude);
-            dataManager.saveUserData(babysitter,  new FirebaseDataManager.OnUserDataSavedListener() {
+            dataManager.saveUserData(babysitter, new FirebaseDataManager.OnUserDataSavedListener() {
                 @Override
                 public void onSuccess() {
                     Toast.makeText(activity_setting.this, "Babysitter information updated successfully.", Toast.LENGTH_SHORT).show();
@@ -176,7 +185,7 @@ public class activity_setting extends AppCompatActivity {
         } else {
             Parent parent = new Parent(uid, name, phone, email, address, this.password,
                     Integer.parseInt(binding.etNumberOfChildren.getText().toString()), this.latitude, this.longitude);
-            dataManager.saveUserData(parent,  new FirebaseDataManager.OnUserDataSavedListener() {
+            dataManager.saveUserData(parent, new FirebaseDataManager.OnUserDataSavedListener() {
                 @Override
                 public void onSuccess() {
                     Toast.makeText(activity_setting.this, "Parent information updated successfully.", Toast.LENGTH_SHORT).show();
@@ -189,8 +198,9 @@ public class activity_setting extends AppCompatActivity {
             });
         }
     }
+
     private void navigateToHome() {
-        if (binding.etAge.getVisibility() == View.VISIBLE) {
+        if (binding.tvAge.getVisibility() == View.VISIBLE) {
             startActivity(new Intent(activity_setting.this, activity_home_babysitter.class));
         } else {
             startActivity(new Intent(activity_setting.this, activity_home_parent.class));
@@ -209,5 +219,24 @@ public class activity_setting extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void showDatePickerDialog() {
+        final Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this,
+                (view, selectedYear, selectedMonth, selectedDay) -> {
+                    LocalDate selectedDate = LocalDate.of(selectedYear, selectedMonth + 1, selectedDay);
+                    binding.etDateOfBirth.setText(selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                    binding.tvAge.setText(String.valueOf(calculateAge(selectedDate)));
+                }, year, month, day);
+        datePickerDialog.show();
+    }
+
+    private int calculateAge(LocalDate dateOfBirth) {
+        return Period.between(dateOfBirth, LocalDate.now()).getYears();
     }
 }

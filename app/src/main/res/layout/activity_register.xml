@@ -73,14 +73,20 @@
             android:hint="Address" />
 
         <!-- Babysitter exclusive fields -->
-        <EditText
-            android:id="@+id/etAge"
+        <TextView
+            android:id="@+id/tvAge"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Age"
             android:inputType="numberDecimal"
             android:visibility="gone" />
 
+        <EditText
+            android:id="@+id/etDateOfBirth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Date of Birth"
+            android:focusable="false" />
 
         <LinearLayout
             android:id="@+id/smokingLayout"
